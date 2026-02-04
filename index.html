@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sale System</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg,#6dd5ed,#2193b0);
+    margin:0;
+    padding:15px;
+}
+
+.container{
+    background:white;
+    max-width:800px;
+    margin:auto;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+h2{
+    text-align:center;
+}
+
+/* input group */
+.form-group{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+}
+
+.form-group input{
+    flex:1;
+    min-width:120px;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:#2193b0;
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#17687e;
+}
+
+/* table */
+.table-wrapper{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    margin-top:20px;
+    border-collapse:collapse;
+    min-width:500px;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+}
+
+th{
+    background:#2193b0;
+    color:white;
+}
+
+.total{
+    margin-top:15px;
+    font-size:18px;
+    font-weight:bold;
+    text-align:right;
+    color:green;
+}
+
+/* 📱 Mobile */
+@media(max-width:600px){
+
+    .form-group{
+        flex-direction:column;
+    }
+
+    button{
+        font-size:18px;
+    }
+
+    h2{
+        font-size:20px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🛒 ប្រព័ន្ធគណនាលក់</h2>
+
+<div class="form-group">
+    <input type="text" id="name" placeholder="ឈ្មោះទំនិញ">
+    <input type="number" id="qty" placeholder="ចំនួន">
+    <input type="number" id="price" placeholder="តម្លៃ">
+</div>
+
+<button onclick="addItem()">បន្ថែម</button>
+
+<div class="table-wrapper">
+<table>
+    <thead>
+        <tr>
+            <th>ល.រ</th>
+            <th>ឈ្មោះ</th>
+            <th>ចំនួន</th>
+            <th>តម្លៃ</th>
+            <th>សរុប</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<div class="total" id="grandTotal">
+    តម្លៃសរុបទាំងអស់: $0
+</div>
+
+</div>
+
+<script>
+
+let count = 0;
+let totalAll = 0;
+
+function addItem(){
+
+    let name = document.getElementById("name").value;
+    let qty = parseFloat(document.getElementById("qty").value);
+    let price = parseFloat(document.getElementById("price").value);
+
+    if(!name || !qty || !price){
+        alert("សូមបញ្ចូលព័ត៌មាន!");
+        return;
+    }
+
+    let total = qty * price;
+
+    count++;
+    totalAll += total;
+
+    let row = `
+        <tr>
+            <td>${count}</td>
+            <td>${name}</td>
+            <td>${qty}</td>
+            <td>$${price}</td>
+            <td>$${total}</td>
+        </tr>
+    `;
+
+    document.getElementById("tableBody").innerHTML += row;
+
+    document.getElementById("grandTotal").innerHTML =
+        "តម្លៃសរុបទាំងអស់: $" + totalAll;
+
+    document.getElementById("name").value="";
+    document.getElementById("qty").value="";
+    document.getElementById("price").value="";
+}
+
+</script>
+
+</body>
+</html>
