@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sale System</title>
 
-<style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<style>
 body{
     font-family: Arial, sans-serif;
     background: linear-gradient(135deg,#6dd5ed,#2193b0);
@@ -27,7 +28,6 @@ h2{
     text-align:center;
 }
 
-/* input group */
 .form-group{
     display:flex;
     gap:10px;
@@ -41,6 +41,7 @@ h2{
     padding:10px;
     border-radius:8px;
     border:1px solid #ccc;
+    font-size:16px;
 }
 
 button{
@@ -52,13 +53,13 @@ button{
     border-radius:8px;
     font-size:16px;
     cursor:pointer;
+    margin-top:8px;
 }
 
 button:hover{
     background:#17687e;
 }
 
-/* table */
 .table-wrapper{
     overflow-x:auto;
 }
@@ -89,22 +90,23 @@ th{
     color:green;
 }
 
-/* 📱 Mobile */
-@media(max-width:600px){
+.action-btn{
+    padding:4px 8px;
+    margin:2px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    color:white;
+}
 
+.edit-btn{ background:#f39c12; }
+.delete-btn{ background:#e74c3c; }
+
+@media(max-width:600px){
     .form-group{
         flex-direction:column;
     }
-
-    button{
-        font-size:18px;
-    }
-
-    h2{
-        font-size:20px;
-    }
 }
-
 </style>
 </head>
 
@@ -117,10 +119,11 @@ th{
 <div class="form-group">
     <input type="text" id="name" placeholder="ឈ្មោះទំនិញ">
     <input type="number" id="qty" placeholder="ចំនួន">
-    <input type="number" id="price" placeholder="តម្លៃ">
+    <input type="number" id="price" placeholder="តម្លៃ (រៀល)">
 </div>
 
 <button onclick="addItem()">បន្ថែម</button>
+<button onclick="exportPDF()">📄 Export Invoice PDF</button>
 
 <div class="table-wrapper">
 <table>
@@ -131,6 +134,7 @@ th{
             <th>ចំនួន</th>
             <th>តម្លៃ</th>
             <th>សរុប</th>
+            <th>ចាត់ការ</th>
         </tr>
     </thead>
     <tbody id="tableBody"></tbody>
@@ -138,18 +142,18 @@ th{
 </div>
 
 <div class="total" id="grandTotal">
-    តម្លៃសរុបទាំងអស់: $0
+    តម្លៃសរុបទាំងអស់: 0 ៛
 </div>
 
 </div>
 
 <script>
-
 let count = 0;
 let totalAll = 0;
+let items = [];
 
+// Add new item
 function addItem(){
-
     let name = document.getElementById("name").value;
     let qty = parseFloat(document.getElementById("qty").value);
     let price = parseFloat(document.getElementById("price").value);
@@ -162,28 +166,84 @@ function addItem(){
     let total = qty * price;
 
     count++;
-    totalAll += total;
-
-    let row = `
-        <tr>
-            <td>${count}</td>
-            <td>${name}</td>
-            <td>${qty}</td>
-            <td>$${price}</td>
-            <td>$${total}</td>
-        </tr>
-    `;
-
-    document.getElementById("tableBody").innerHTML += row;
-
-    document.getElementById("grandTotal").innerHTML =
-        "តម្លៃសរុបទាំងអស់: $" + totalAll;
-
-    document.getElementById("name").value="";
-    document.getElementById("qty").value="";
-    document.getElementById("price").value="";
+    items.push({id: count, name, qty, price, total});
+    updateTable();
+    clearInputs();
 }
 
+// Update table
+function updateTable(){
+    let tableBody = document.getElementById("tableBody");
+    tableBody.innerHTML = "";
+    totalAll = 0;
+
+    items.forEach((item, index) => {
+        totalAll += item.total;
+        let row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${index+1}</td>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>${item.price} ៛</td>
+            <td>${item.total} ៛</td>
+            <td>
+                <button class="action-btn edit-btn" onclick="editItem(${item.id})">កែ</button>
+                <button class="action-btn delete-btn" onclick="deleteItem(${item.id})">លុប</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    document.getElementById("grandTotal").innerHTML = "តម្លៃសរុបទាំងអស់: " + totalAll + " ៛";
+}
+
+// Clear input fields
+function clearInputs(){
+    document.getElementById("name").value = "";
+    document.getElementById("qty").value = "";
+    document.getElementById("price").value = "";
+}
+
+// Delete item
+function deleteItem(id){
+    items = items.filter(item => item.id !== id);
+    updateTable();
+}
+
+// Edit item
+function editItem(id){
+    let item = items.find(i => i.id === id);
+    if(item){
+        document.getElementById("name").value = item.name;
+        document.getElementById("qty").value = item.qty;
+        document.getElementById("price").value = item.price;
+        deleteItem(id); // remove old row while editing
+    }
+}
+
+// Export PDF
+function exportPDF(){
+    const { jsPDF } = window.jspdf;
+    let doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Invoice Sale System", 60, 20);
+
+    let y = 40;
+    doc.setFontSize(12);
+
+    items.forEach(item => {
+        doc.text(
+            `${item.name}  Qty:${item.qty}  Price:${item.price}៛  Total:${item.total}៛`,
+            10,
+            y
+        );
+        y += 10;
+    });
+
+    doc.text(`Grand Total: ${totalAll}៛`, 10, y + 10);
+    doc.save("invoice.pdf");
+}
 </script>
 
 </body>
